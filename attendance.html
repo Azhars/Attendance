@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>רישום נוכחות - הוצאה לפועל</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Rubik:wght@400;500;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2EFE6;
+    --card:#FFFDF7;
+    --ink:#1F2A44;
+    --stamp:#B23A2E;
+    --gold:#C9A227;
+    --muted:#8B8577;
+    --line: rgba(31,42,68,0.16);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(201,162,39,0.10), transparent 60%),
+      radial-gradient(900px 500px at 100% 10%, rgba(178,58,46,0.08), transparent 55%),
+      var(--paper);
+    font-family:'Rubik', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    padding:32px 16px 64px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+
+  /* header document card */
+  .doc{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:6px;
+    box-shadow:0 18px 40px -18px rgba(31,42,68,0.35), 0 2px 0 rgba(31,42,68,0.04);
+    padding:28px 26px 22px;
+    position:relative;
+    overflow:hidden;
+  }
+  .doc::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, var(--line) 28px);
+    opacity:0.35;
+    pointer-events:none;
+  }
+  .case-no{
+    font-family:'Courier Prime', monospace;
+    font-size:12px;
+    letter-spacing:0.5px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:14px;
+    position:relative;
+  }
+  .eyebrow{
+    font-family:'Courier Prime', monospace;
+    font-size:12px;
+    color:var(--stamp);
+    letter-spacing:1px;
+    margin-bottom:6px;
+    position:relative;
+  }
+  h1{
+    font-family:'Frank Ruhl Libre', serif;
+    font-weight:900;
+    font-size:clamp(28px, 6vw, 38px);
+    line-height:1.15;
+    margin:0 0 10px;
+    position:relative;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.6;
+    margin:0 0 18px;
+    max-width:46ch;
+    position:relative;
+  }
+
+  /* comic illustration */
+  .scene{ position:relative; margin:6px -6px 14px; }
+  .scene svg{ width:100%; height:auto; display:block; }
+
+  .warning{
+    background:rgba(178,58,46,0.06);
+    border:1px dashed var(--stamp);
+    border-radius:4px;
+    padding:10px 14px;
+    font-size:13px;
+    color:var(--stamp);
+    margin-bottom:20px;
+    position:relative;
+  }
+
+  /* form */
+  form{ position:relative; display:grid; gap:14px; }
+  label{
+    font-size:12px;
+    color:var(--muted);
+    font-family:'Courier Prime', monospace;
+    letter-spacing:0.3px;
+    display:block;
+    margin-bottom:5px;
+  }
+  input{
+    width:100%;
+    font-family:'Rubik', sans-serif;
+    font-size:16px;
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#fff;
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input:focus{
+    border-color:var(--stamp);
+    box-shadow:0 0 0 3px rgba(178,58,46,0.12);
+  }
+  .row{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:480px){ .row{grid-template-columns:1fr;} }
+
+  button{
+    margin-top:4px;
+    font-family:'Frank Ruhl Libre', serif;
+    font-weight:700;
+    font-size:17px;
+    padding:14px 20px;
+    border:none;
+    border-radius:5px;
+    background:var(--ink);
+    color:var(--paper);
+    cursor:pointer;
+    position:relative;
+    transition:transform .12s ease, background .15s ease;
+  }
+  button:hover{ background:#2c3a5c; }
+  button:active{ transform:scale(0.98); }
+  button:disabled{ opacity:0.55; cursor:default; }
+
+  .status{
+    margin-top:10px;
+    font-size:14px;
+    min-height:20px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  /* stamp */
+  .stampmark{
+    position:absolute;
+    top:14px; left:16px;
+    width:96px; height:96px;
+    opacity:0;
+    transform:scale(2.6) rotate(-18deg);
+    transition:opacity .18s ease, transform .38s cubic-bezier(.2,1.6,.4,1);
+    pointer-events:none;
+  }
+  .stampmark.show{ opacity:1; transform:scale(1) rotate(-18deg); }
+
+  /* attendee list */
+  .list-card{
+    margin-top:22px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:20px 22px;
+    box-shadow:0 10px 24px -16px rgba(31,42,68,0.3);
+  }
+  .list-title{
+    font-family:'Frank Ruhl Libre', serif;
+    font-weight:700;
+    font-size:19px;
+    margin:0 0 4px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .count{
+    font-family:'Courier Prime', monospace;
+    font-size:13px;
+    color:var(--muted);
+    font-weight:400;
+  }
+  .list-sub{ font-size:12px; color:var(--muted); margin:0 0 14px; }
+  ul.att{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+  ul.att li{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 12px;
+    background:rgba(31,42,68,0.03);
+    border:1px solid var(--line);
+    border-radius:4px;
+    font-size:14px;
+    animation:pop .3s ease;
+  }
+  ul.att li .name{ font-weight:500; }
+  ul.att li .time{ font-family:'Courier Prime', monospace; font-size:12px; color:var(--muted); }
+  .empty{ font-size:13px; color:var(--muted); padding:16px 0; text-align:center; }
+  @keyframes pop{ from{ opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
+
+  footer{
+    text-align:center;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:22px;
+    font-family:'Courier Prime', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="doc">
+    <div class="case-no">
+      <span>תיק מס' 26-0710-נוכחות</span>
+      <span id="today"></span>
+    </div>
+    <div class="eyebrow">לשכת ההוצאה לפועל של הקורס</div>
+    <h1>כתב אזהרה לנוכחות</h1>
+    <p class="sub">
+      נמסרת בזאת הודעה: אי-הגעה לשיעור עלולה להוביל לפתיחת הליכי גבייה מנהליים
+      כנגד הציון שלך. חתמו למטה כדי להימנע מעיקול על השקט הנפשי בסוף הסמסטר.
+    </p>
+
+    <div class="scene">
+      <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+        <!-- floor -->
+        <rect x="0" y="205" width="700" height="55" fill="#EDE7D6"/>
+        <line x1="0" y1="205" x2="700" y2="205" stroke="#D8D0B8" stroke-width="2"/>
+
+        <!-- couch -->
+        <g>
+          <rect x="60" y="130" width="180" height="70" rx="10" fill="#8B8577" opacity="0.85"/>
+          <rect x="60" y="105" width="180" height="35" rx="10" fill="#9a9481" opacity="0.9"/>
+          <rect x="52" y="120" width="26" height="80" rx="8" fill="#8B8577"/>
+          <rect x="222" y="120" width="26" height="80" rx="8" fill="#8B8577"/>
+        </g>
+        <!-- seized tag on couch -->
+        <g transform="translate(150,90) rotate(-8)">
+          <rect x="-38" y="-14" width="76" height="28" rx="4" fill="#FFFDF7" stroke="#B23A2E" stroke-width="2"/>
+          <text x="0" y="6" text-anchor="middle" font-family="Courier Prime, monospace" font-size="13" fill="#B23A2E" font-weight="700">מעוקל!</text>
+        </g>
+
+        <!-- tv on stand -->
+        <g>
+          <rect x="330" y="150" width="120" height="10" fill="#8B8577"/>
+          <rect x="345" y="90" width="90" height="60" rx="4" fill="#1F2A44"/>
+          <rect x="352" y="97" width="76" height="46" rx="2" fill="#3a4c78"/>
+        </g>
+        <g transform="translate(390,72) rotate(6)">
+          <rect x="-34" y="-13" width="68" height="26" rx="4" fill="#FFFDF7" stroke="#B23A2E" stroke-width="2"/>
+          <text x="0" y="5" text-anchor="middle" font-family="Courier Prime, monospace" font-size="12" fill="#B23A2E" font-weight="700">מעוקל!</text>
+        </g>
+
+        <!-- bailiff character -->
+        <g transform="translate(520,60)">
+          <!-- legs -->
+          <rect x="10" y="140" width="16" height="45" rx="6" fill="#1F2A44"/>
+          <rect x="40" y="140" width="16" height="45" rx="6" fill="#1F2A44"/>
+          <!-- shoes -->
+          <rect x="4" y="182" width="28" height="10" rx="4" fill="#111827"/>
+          <rect x="36" y="182" width="28" height="10" rx="4" fill="#111827"/>
+          <!-- body / coat -->
+          <path d="M0,80 C0,60 66,60 66,80 L72,145 L-6,145 Z" fill="#2c3a5c"/>
+          <rect x="26" y="70" width="14" height="60" fill="#C9A227" opacity="0.9"/>
+          <!-- arm holding stamp -->
+          <g transform="rotate(-18 62 95)">
+            <rect x="55" y="80" width="16" height="55" rx="7" fill="#2c3a5c"/>
+          </g>
+          <!-- stamp tool -->
+          <g transform="translate(90,55) rotate(24)">
+            <rect x="-10" y="-6" width="20" height="34" rx="4" fill="#5b4636"/>
+            <rect x="-18" y="24" width="36" height="14" rx="3" fill="#B23A2E"/>
+          </g>
+          <!-- head -->
+          <circle cx="33" cy="45" r="26" fill="#E9C9A0"/>
+          <!-- hat -->
+          <path d="M4,34 Q33,-4 62,34 L62,38 L4,38 Z" fill="#1F2A44"/>
+          <rect x="0" y="34" width="66" height="8" rx="3" fill="#1F2A44"/>
+          <!-- face -->
+          <circle cx="24" cy="46" r="2.4" fill="#1F2A44"/>
+          <circle cx="42" cy="46" r="2.4" fill="#1F2A44"/>
+          <path d="M22,58 Q33,64 44,58" stroke="#1F2A44" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          <!-- eyebrows: stern -->
+          <path d="M18,40 L28,42" stroke="#1F2A44" stroke-width="2" stroke-linecap="round"/>
+          <path d="M48,40 L38,42" stroke="#1F2A44" stroke-width="2" stroke-linecap="round"/>
+        </g>
+
+        <!-- flying papers -->
+        <g fill="#FFFDF7" stroke="#D8D0B8">
+          <rect x="470" y="30" width="20" height="26" rx="2" transform="rotate(-15 480 43)"/>
+          <rect x="500" y="10" width="18" height="24" rx="2" transform="rotate(12 509 22)"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="warning">
+      אזהרה: מי שלא יחתום עלול להיחשב "חייב" בשיעור נוכחות אחד. הריבית — הומור עצמי בלבד.
+    </div>
+
+    <form id="attForm">
+      <div class="row">
+        <div>
+          <label for="fname">שם מלא</label>
+          <input id="fname" type="text" required autocomplete="off" placeholder="ישראל ישראלי">
+        </div>
+        <div>
+          <label for="sid">מספר סטודנט / ת.ז.</label>
+          <input id="sid" type="text" required autocomplete="off" placeholder="123456789">
+        </div>
+      </div>
+      <button type="submit" id="submitBtn">חתום ואשר נוכחות</button>
+      <div class="status" id="status"></div>
+    </form>
+
+    <svg class="stampmark" id="stampSvg" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="44" fill="none" stroke="#B23A2E" stroke-width="4"/>
+      <circle cx="50" cy="50" r="36" fill="none" stroke="#B23A2E" stroke-width="1.5"/>
+      <text x="50" y="46" text-anchor="middle" font-family="Courier Prime, monospace" font-size="13" fill="#B23A2E" font-weight="700">נוכח/ת</text>
+      <text x="50" y="62" text-anchor="middle" font-family="Courier Prime, monospace" font-size="9" fill="#B23A2E">אושר ✓</text>
+    </svg>
+  </div>
+
+  <div class="list-card">
+    <p class="list-title">רשימת נוכחים <span class="count" id="countLabel">0</span></p>
+    <p class="list-sub">התיעוד מתעדכן בזמן אמת לכל מי שפותח את הדף הזה.</p>
+    <ul class="att" id="attList"></ul>
+    <div class="empty" id="emptyMsg">עדיין לא נחתם כלום. היה/י הראשון/ה "להיעקל".</div>
+  </div>
+
+  <footer>רישום זה נועד לצחוק קל בלבד ואינו מהווה הליך משפטי אמיתי 😉</footer>
+</div>
+
+<script>
+  document.getElementById('today').textContent = new Date().toLocaleDateString('he-IL', {day:'2-digit', month:'2-digit', year:'numeric'});
+
+  const form = document.getElementById('attForm');
+  const statusEl = document.getElementById('status');
+  const stampSvg = document.getElementById('stampSvg');
+  const listEl = document.getElementById('attList');
+  const emptyMsg = document.getElementById('emptyMsg');
+  const countLabel = document.getElementById('countLabel');
+  const submitBtn = document.getElementById('submitBtn');
+
+  const LIST_KEY = 'attendance:entries';
+
+  async function loadEntries(){
+    try{
+      const res = await window.storage.get(LIST_KEY, true);
+      return res ? JSON.parse(res.value) : [];
+    }catch(e){
+      return [];
+    }
+  }
+
+  async function saveEntries(entries){
+    await window.storage.set(LIST_KEY, JSON.stringify(entries), true);
+  }
+
+  function render(entries){
+    listEl.innerHTML = '';
+    countLabel.textContent = entries.length;
+    if(entries.length === 0){
+      emptyMsg.style.display = 'block';
+      return;
+    }
+    emptyMsg.style.display = 'none';
+    entries.slice().reverse().forEach(e => {
+      const li = document.createElement('li');
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'name';
+      nameSpan.textContent = e.name;
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'time';
+      timeSpan.textContent = e.time;
+      li.appendChild(nameSpan);
+      li.appendChild(timeSpan);
+      listEl.appendChild(li);
+    });
+  }
+
+  async function refresh(){
+    const entries = await loadEntries();
+    render(entries);
+  }
+
+  refresh();
+  setInterval(refresh, 4000);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    const name = document.getElementById('fname').value.trim();
+    const sid = document.getElementById('sid').value.trim();
+    if(!name || !sid){ submitBtn.disabled = false; return; }
+
+    statusEl.textContent = 'רושם/ת נוכחות...';
+
+    try{
+      const entries = await loadEntries();
+      const already = entries.some(e => e.sid === sid);
+      if(already){
+        statusEl.textContent = 'כבר "נעקלת" היום - הנוכחות שלך כבר רשומה 😄';
+        submitBtn.disabled = false;
+        return;
+      }
+      entries.push({
+        name,
+        sid,
+        time: new Date().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})
+      });
+      await saveEntries(entries);
+      render(entries);
+
+      stampSvg.classList.remove('show');
+      void stampSvg.offsetWidth;
+      stampSvg.classList.add('show');
+
+      statusEl.textContent = 'נוכחות אושרה, בברכת בית הדין 🔨';
+      form.reset();
+    }catch(err){
+      statusEl.textContent = 'משהו השתבש, נסה/י שוב.';
+    }finally{
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
